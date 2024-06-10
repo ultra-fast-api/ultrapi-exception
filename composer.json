@@ -1,0 +1,24 @@
+{
+    "name": "ultrapi/exception",
+    "description": "Exception handler for The Ultra Fast API",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "UpiCore\\Exception\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
+    "authors": [
+        {
+            "name": "GokhanKR",
+            "email": "me@gokhankorul.dev"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
