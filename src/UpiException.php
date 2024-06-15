@@ -8,8 +8,10 @@
  * It extends the base Exception class and adds localization support
  * and custom exception handling.
  * 
- * @author Gokhan Korul <me@gokhankorul.dev>
  * @package UpiCore\Exception
+ * @license MIT License
+ * @author Gokhan Korul <me@gokhankorul.dev>
+ * @link https://ultrapi.dev
  */
 
 declare(strict_types=1);
@@ -18,6 +20,13 @@ namespace UpiCore\Exception;
 
 class UpiException extends \Exception
 {
+    /**
+     * Custom exception handler
+     *
+     * @var \Closure|null
+     */
+    private static $exceptionHandler = null;
+
     public function __construct(string $key, ?string ...$args)
     {
         $lang = new \UpiCore\Localization\Language();
@@ -29,28 +38,33 @@ class UpiException extends \Exception
         $this->code = $status ?: 503;
         $this->message = $message;
 
-        self::exceptionHandler();
+        null !== self::$exceptionHandler ?: self::exceptionHandler();
     }
 
     public static function exceptionHandler(\Closure $exceptionHandler = null)
     {
         $handler = function (\Throwable $exception) use ($exceptionHandler) {
             if (!($exception instanceof \UpiCore\Exception\UpiException)) {
-                $exceptionHandler($exception);
+                $exceptionHandler($exception, self::class);
             } else {
-                $exception->__toString();
+                $exception->returnResult();
             }
         };
 
-        set_exception_handler($handler);
+        \set_exception_handler($handler);
     }
 
-    public function __toString(): string
+    public static function setExceptionHandler(\Closure $handler): void
     {
-        $routerContext = new \UpiCore\Router\UpiRouterContext();
+        self::exceptionHandler(self::$exceptionHandler = $handler);
+    }
 
-        return $routerContext->create()
-            ->withContent(\UpiCore\Router\UpiRouter::getInterpretation())
+    public function returnResult(): void
+    {
+        $routerContext = new \UpiCore\Router\RouterContext();
+
+        $routerContext->createResponse()
+            ->withContent(\UpiCore\Router\Router::getInterpretation())
             ->withStatus($this->code)
             ->withMessage($this->message)
             ->toResponse();
@@ -67,7 +81,9 @@ class UpiException extends \Exception
             "errMessage" => $this->message,
         ];
 
-        if (\ERROR_DETAILS)
+        $errorDetails = !\defined('ERROR_DETAILS') ? 0 : ERROR_DETAILS;
+
+        if ($errorDetails)
             $toStringExp['errDetails'] = $this->errorDetails();
 
         return $toStringExp;
