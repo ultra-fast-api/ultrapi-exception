@@ -10,7 +10,6 @@
  * 
  * @package UpiCore\Exception
  * @license MIT License
- * @author Gokhan Korul <me@gokhankorul.dev>
  * @link https://ultrapi.dev
  */
 
@@ -18,8 +17,13 @@ declare(strict_types=1);
 
 namespace UpiCore\Exception;
 
-class UpiException extends \Exception
+use UpiCore\Router\RouterContext;
+
+class UpiException extends \Exception implements \UpiCore\Controller\Interfaces\ControllerBridgeInterface
 {
+
+    use \UpiCore\Controller\Traits\ControllerBridgeTrait;
+
     /**
      * Custom exception handler
      *
@@ -31,7 +35,7 @@ class UpiException extends \Exception
     {
         $lang = new \UpiCore\Localization\Language();
 
-        $pureText = $lang->getPureText($key, ...$args);
+        $pureText = $lang->getTextAll($key, ...$args);
 
         list($status, $message) = \UpiCore\Localization\Message\HTTPMessage::parseTextMessage($pureText);
 
@@ -61,13 +65,23 @@ class UpiException extends \Exception
 
     public function returnResult(): void
     {
-        $routerContext = new \UpiCore\Router\RouterContext();
+        if (\is_null($this->routerContext)) {
+            $self = (new self('EXCEPTION_ROUTER_CXT_NOT_PROVIDED'));
+            $self->withRouterContext(
+                (new RouterContext())->withContent(
+                    \UpiCore\Router\Router::getInterpretation()
+                )
+            );
 
-        $routerContext->createResponse()
-            ->withContent(\UpiCore\Router\Router::getInterpretation())
+            $self->returnResult();
+        }
+
+        $this->routerContext
             ->withStatus($this->code)
             ->withMessage($this->message)
             ->toResponse();
+
+        exit;
     }
 
     /**
