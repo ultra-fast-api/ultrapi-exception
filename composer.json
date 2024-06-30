@@ -15,10 +15,16 @@
     },
     "authors": [
         {
+            "name": "UltraFastApi",
+            "email": "info@ultrapi.dev"
+        },
+        {
             "name": "GokhanKR",
             "email": "me@gokhankorul.dev"
         }
     ],
-    "minimum-stability": "dev",
-    "require": {}
+    "minimum-stability": "stable",
+    "require-dev": {
+        "phpunit/phpunit": "^11.2.5"
+    }
 }
